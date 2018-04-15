@@ -1,0 +1,832 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import urllib2 \n",
+    "from bs4 import BeautifulSoup \n",
+    "import json"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import requests\n",
+    "import datetime\n",
+    "import pandas as pd"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#used: https://github.com/agalea91/cryptocompare-api/blob/master/CryptoCompare.API.2017.08.ipynb\n",
+    "import uuid\n",
+    "from IPython.display import display_javascript, display_html, display\n",
+    "import json\n",
+    "\n",
+    "class RenderJSON(object):\n",
+    "    def __init__(self, json_data):\n",
+    "        if isinstance(json_data, dict):\n",
+    "            self.json_str = json.dumps(json_data)\n",
+    "        else:\n",
+    "            self.json_str = json_data\n",
+    "        self.uuid = str(uuid.uuid4())\n",
+    "\n",
+    "    def _ipython_display_(self):\n",
+    "        display_html('<div id=\"{}\" style=\"height: 600px; width:100%;\"></div>'.format(self.uuid), raw=True)\n",
+    "        display_javascript(\"\"\"\n",
+    "        require([\"https://rawgit.com/caldwell/renderjson/master/renderjson.js\"], function() {\n",
+    "        document.getElementById('%s').appendChild(renderjson(%s))\n",
+    "        });\n",
+    "        \"\"\" % (self.uuid, self.json_str), raw=True)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def coin_list():\n",
+    "    url = 'https://www.cryptocompare.com/api/data/coinlist/'\n",
+    "    page = requests.get(url)\n",
+    "    data = page.json()['Data']\n",
+    "    return data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "url = 'https://www.cryptocompare.com/api/data/coinlist/'\n",
+    "page = requests.get(url)\n",
+    "data = page.json()['Data']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import sys\n",
+    "reload(sys)\n",
+    "sys.setdefaultencoding('utf8')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "dd = pd.DataFrame.from_dict(data, orient='index')\n",
+    "dd.reset_index(level=0, inplace=True)\n",
+    "#dd.drop(['index'])\n",
+    "dd.columns.values.tolist()\n",
+    "dd.to_csv('Reddit_Code_list.csv')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print dd.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data = coin_list()\n",
+    "#RenderJSON(data)\n",
+    "#print (data)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#data.items()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Create dictionary of code_ids of coins"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#dict type\n",
+    "symbol_id_dict = {symb: int(d['Id']) for symb, d in data.items()}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "symbol_id_df = pd.DataFrame.from_dict(symbol_id_dict, orient='index')\n",
+    "symbol_id_df.index.name = 'newhead'\n",
+    "symbol_id_df.reset_index(inplace=True)\n",
+    "symbol_id_df.columns=['Ticker','code_id']\n",
+    "#print symbol_id_df.head()\n",
+    "#symbol_id_df.to_csv('Reddit_Code_list_short.csv')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#convert dict to df\n",
+    "train = pd.DataFrame.from_dict(symbol_id_dict, orient='index')\n",
+    "train.reset_index(level=0, inplace=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#convert df into array for cycle\n",
+    "array=train[train.columns[1]]\n",
+    "print array"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#create empty dataframe\n",
+    "import numpy as np"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#add datetime of stats\n",
+    "from datetime import date\n",
+    "create_date = \"{:%Y-%m-%d}\".format(date.today())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#array=[7605, 321992,5038]\n",
+    "l1=list()\n",
+    "df_ = pd.DataFrame()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# General info about coins\n",
+    "# Next: (1) collect for all coins\n",
+    "# (2) remove html from Technology2 col"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 78,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "l=list()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 79,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "array1=[5038,7605, 321992]\n",
+    "# array1=array\n",
+    "df_ = pd.DataFrame()\n",
+    "for i in array1:\n",
+    "    url=\"https://www.cryptocompare.com/api/data/coinsnapshotfullbyid/?id={}\".format(i)\n",
+    "    urlo = urllib2.urlopen(url)\n",
+    "    content = urlo.read()\n",
+    "    reddit=json.loads(content)['Data']['General']\n",
+    "    del reddit['Sponsor']\n",
+    "#     reddit['code_id']= i\n",
+    "#     reddit['date']=create_date\n",
+    "    l.append(reddit)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 92,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "reddit_df=pd.DataFrame(l)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 86,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Algorithm</th>\n",
+       "      <th>BaseAngularUrl</th>\n",
+       "      <th>BlockNumber</th>\n",
+       "      <th>BlockReward</th>\n",
+       "      <th>BlockRewardReduction</th>\n",
+       "      <th>BlockTime</th>\n",
+       "      <th>DangerTop</th>\n",
+       "      <th>Description</th>\n",
+       "      <th>DifficultyAdjustment</th>\n",
+       "      <th>DocumentType</th>\n",
+       "      <th>...</th>\n",
+       "      <th>StartDate</th>\n",
+       "      <th>Symbol</th>\n",
+       "      <th>Technology</th>\n",
+       "      <th>TotalCoinSupply</th>\n",
+       "      <th>TotalCoinsMined</th>\n",
+       "      <th>Twitter</th>\n",
+       "      <th>Url</th>\n",
+       "      <th>WarningTop</th>\n",
+       "      <th>Website</th>\n",
+       "      <th>WebsiteUrl</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>CryptoNight</td>\n",
+       "      <td>/coins/xmr/</td>\n",
+       "      <td>1545553</td>\n",
+       "      <td>4.853567</td>\n",
+       "      <td>-</td>\n",
+       "      <td>120</td>\n",
+       "      <td></td>\n",
+       "      <td>&lt;p&gt;Monero (XMR) is a cryptonight algorithm bas...</td>\n",
+       "      <td>2 blocks</td>\n",
+       "      <td>Webpagecoinp</td>\n",
+       "      <td>...</td>\n",
+       "      <td>02/06/2014</td>\n",
+       "      <td>XMR</td>\n",
+       "      <td>&lt;h3 id=\"application-to-monero\"&gt;Ring Signature ...</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1.590208e+07</td>\n",
+       "      <td>@monerocurrency</td>\n",
+       "      <td>/coins/xmr/</td>\n",
+       "      <td></td>\n",
+       "      <td>&lt;a href='http://getmonero.org/' target='_blank...</td>\n",
+       "      <td>http://getmonero.org/</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>Ethash</td>\n",
+       "      <td>/coins/eth/</td>\n",
+       "      <td>5386776</td>\n",
+       "      <td>3.000000</td>\n",
+       "      <td></td>\n",
+       "      <td>15</td>\n",
+       "      <td></td>\n",
+       "      <td>&lt;p&gt;Ethereum is a decentralized platform that r...</td>\n",
+       "      <td>Per 1 Block</td>\n",
+       "      <td>Webpagecoinp</td>\n",
+       "      <td>...</td>\n",
+       "      <td>30/07/2015</td>\n",
+       "      <td>ETH</td>\n",
+       "      <td>&lt;p&gt;&lt;strong&gt;Sandwich complexity model&lt;/strong&gt;:...</td>\n",
+       "      <td>0</td>\n",
+       "      <td>9.863610e+07</td>\n",
+       "      <td>@ethereumproject</td>\n",
+       "      <td>/coins/eth/</td>\n",
+       "      <td></td>\n",
+       "      <td>&lt;a href='https://www.ethereum.org/' target='_b...</td>\n",
+       "      <td>https://www.ethereum.org/</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Ouroboros</td>\n",
+       "      <td>/coins/ada/</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0.000000</td>\n",
+       "      <td></td>\n",
+       "      <td>0</td>\n",
+       "      <td></td>\n",
+       "      <td>&lt;p&gt; &lt;/p&gt;&lt;p&gt;Designed and developed by &lt;span&gt;IOH...</td>\n",
+       "      <td></td>\n",
+       "      <td>Webpagecoinp</td>\n",
+       "      <td>...</td>\n",
+       "      <td>01/01/0001</td>\n",
+       "      <td>ADA</td>\n",
+       "      <td></td>\n",
+       "      <td>45000000000</td>\n",
+       "      <td>2.592707e+10</td>\n",
+       "      <td>@cardanocom</td>\n",
+       "      <td>/coins/ada/</td>\n",
+       "      <td></td>\n",
+       "      <td>&lt;a href='https://www.cardano.org/en/home/' tar...</td>\n",
+       "      <td>https://www.cardano.org/en/home/</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>3 rows × 30 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "     Algorithm BaseAngularUrl  BlockNumber  BlockReward BlockRewardReduction  \\\n",
+       "0  CryptoNight    /coins/xmr/      1545553     4.853567                    -   \n",
+       "1       Ethash    /coins/eth/      5386776     3.000000                        \n",
+       "2    Ouroboros    /coins/ada/            0     0.000000                        \n",
+       "\n",
+       "   BlockTime DangerTop                                        Description  \\\n",
+       "0        120            <p>Monero (XMR) is a cryptonight algorithm bas...   \n",
+       "1         15            <p>Ethereum is a decentralized platform that r...   \n",
+       "2          0            <p>┬á</p><p>Designed and developed by┬á<span>IOH...   \n",
+       "\n",
+       "  DifficultyAdjustment  DocumentType                ...                 \\\n",
+       "0             2 blocks  Webpagecoinp                ...                  \n",
+       "1          Per 1 Block  Webpagecoinp                ...                  \n",
+       "2                       Webpagecoinp                ...                  \n",
+       "\n",
+       "    StartDate Symbol                                         Technology  \\\n",
+       "0  02/06/2014    XMR  <h3 id=\"application-to-monero\">Ring Signature┬á...   \n",
+       "1  30/07/2015    ETH  <p><strong>Sandwich complexity model</strong>:...   \n",
+       "2  01/01/0001    ADA                                                      \n",
+       "\n",
+       "  TotalCoinSupply TotalCoinsMined           Twitter          Url  WarningTop  \\\n",
+       "0               0    1.590208e+07   @monerocurrency  /coins/xmr/               \n",
+       "1               0    9.863610e+07  @ethereumproject  /coins/eth/               \n",
+       "2     45000000000    2.592707e+10       @cardanocom  /coins/ada/               \n",
+       "\n",
+       "                                             Website  \\\n",
+       "0  <a href='http://getmonero.org/' target='_blank...   \n",
+       "1  <a href='https://www.ethereum.org/' target='_b...   \n",
+       "2  <a href='https://www.cardano.org/en/home/' tar...   \n",
+       "\n",
+       "                         WebsiteUrl  \n",
+       "0             http://getmonero.org/  \n",
+       "1         https://www.ethereum.org/  \n",
+       "2  https://www.cardano.org/en/home/  \n",
+       "\n",
+       "[3 rows x 30 columns]"
+      ]
+     },
+     "execution_count": 86,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "reddit_df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 93,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "for i in range(0, len(reddit_df.index)):\n",
+    "    reddit_df['Description'][i] = BeautifulSoup(reddit_df['Description'][i]).get_text()\n",
+    "    reddit_df['Technology'][i] = BeautifulSoup(reddit_df['Technology'][i]).get_text()\n",
+    "    reddit_df['Website'][i] = BeautifulSoup(reddit_df['Website'][i]).find(\"a\").get(\"href\")\n",
+    "# soup = BeautifulSoup(html)\n",
+    "# text = soup.get_text()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 94,
+   "metadata": {
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Algorithm</th>\n",
+       "      <th>BaseAngularUrl</th>\n",
+       "      <th>BlockNumber</th>\n",
+       "      <th>BlockReward</th>\n",
+       "      <th>BlockRewardReduction</th>\n",
+       "      <th>BlockTime</th>\n",
+       "      <th>DangerTop</th>\n",
+       "      <th>Description</th>\n",
+       "      <th>DifficultyAdjustment</th>\n",
+       "      <th>DocumentType</th>\n",
+       "      <th>...</th>\n",
+       "      <th>ProofType</th>\n",
+       "      <th>StartDate</th>\n",
+       "      <th>Symbol</th>\n",
+       "      <th>Technology</th>\n",
+       "      <th>TotalCoinSupply</th>\n",
+       "      <th>TotalCoinsMined</th>\n",
+       "      <th>Twitter</th>\n",
+       "      <th>Url</th>\n",
+       "      <th>WarningTop</th>\n",
+       "      <th>Website</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>CryptoNight</td>\n",
+       "      <td>/coins/xmr/</td>\n",
+       "      <td>1545553</td>\n",
+       "      <td>4.853567</td>\n",
+       "      <td>-</td>\n",
+       "      <td>120</td>\n",
+       "      <td></td>\n",
+       "      <td>Monero (XMR) is a cryptonight algorithm based ...</td>\n",
+       "      <td>2 blocks</td>\n",
+       "      <td>Webpagecoinp</td>\n",
+       "      <td>...</td>\n",
+       "      <td>PoW</td>\n",
+       "      <td>02/06/2014</td>\n",
+       "      <td>XMR</td>\n",
+       "      <td>Ring Signature The BasicsIn cryptography, a ri...</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1.590208e+07</td>\n",
+       "      <td>@monerocurrency</td>\n",
+       "      <td>/coins/xmr/</td>\n",
+       "      <td></td>\n",
+       "      <td>http://getmonero.org/</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>Ethash</td>\n",
+       "      <td>/coins/eth/</td>\n",
+       "      <td>5386776</td>\n",
+       "      <td>3.000000</td>\n",
+       "      <td></td>\n",
+       "      <td>15</td>\n",
+       "      <td></td>\n",
+       "      <td>Ethereum is a decentralized platform that runs...</td>\n",
+       "      <td>Per 1 Block</td>\n",
+       "      <td>Webpagecoinp</td>\n",
+       "      <td>...</td>\n",
+       "      <td>PoW</td>\n",
+       "      <td>30/07/2015</td>\n",
+       "      <td>ETH</td>\n",
+       "      <td>Sandwich complexity model: the bottom level ar...</td>\n",
+       "      <td>0</td>\n",
+       "      <td>9.863610e+07</td>\n",
+       "      <td>@ethereumproject</td>\n",
+       "      <td>/coins/eth/</td>\n",
+       "      <td></td>\n",
+       "      <td>https://www.ethereum.org/</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Ouroboros</td>\n",
+       "      <td>/coins/ada/</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0.000000</td>\n",
+       "      <td></td>\n",
+       "      <td>0</td>\n",
+       "      <td></td>\n",
+       "      <td>Designed and developed by IOHK in conjunction...</td>\n",
+       "      <td></td>\n",
+       "      <td>Webpagecoinp</td>\n",
+       "      <td>...</td>\n",
+       "      <td>PoS</td>\n",
+       "      <td>01/01/0001</td>\n",
+       "      <td>ADA</td>\n",
+       "      <td></td>\n",
+       "      <td>45000000000</td>\n",
+       "      <td>2.592707e+10</td>\n",
+       "      <td>@cardanocom</td>\n",
+       "      <td>/coins/ada/</td>\n",
+       "      <td></td>\n",
+       "      <td>https://www.cardano.org/en/home/</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>3 rows × 29 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "     Algorithm BaseAngularUrl  BlockNumber  BlockReward BlockRewardReduction  \\\n",
+       "0  CryptoNight    /coins/xmr/      1545553     4.853567                    -   \n",
+       "1       Ethash    /coins/eth/      5386776     3.000000                        \n",
+       "2    Ouroboros    /coins/ada/            0     0.000000                        \n",
+       "\n",
+       "   BlockTime DangerTop                                        Description  \\\n",
+       "0        120            Monero (XMR) is a cryptonight algorithm based ...   \n",
+       "1         15            Ethereum is a decentralized platform that runs...   \n",
+       "2          0            ┬áDesigned and developed by┬áIOHK in conjunction...   \n",
+       "\n",
+       "  DifficultyAdjustment  DocumentType                ...                 \\\n",
+       "0             2 blocks  Webpagecoinp                ...                  \n",
+       "1          Per 1 Block  Webpagecoinp                ...                  \n",
+       "2                       Webpagecoinp                ...                  \n",
+       "\n",
+       "  ProofType   StartDate Symbol  \\\n",
+       "0       PoW  02/06/2014    XMR   \n",
+       "1       PoW  30/07/2015    ETH   \n",
+       "2       PoS  01/01/0001    ADA   \n",
+       "\n",
+       "                                          Technology TotalCoinSupply  \\\n",
+       "0  Ring Signature┬áThe BasicsIn cryptography, a ri...               0   \n",
+       "1  Sandwich complexity model:┬áthe bottom level ar...               0   \n",
+       "2                                                        45000000000   \n",
+       "\n",
+       "   TotalCoinsMined           Twitter          Url  WarningTop  \\\n",
+       "0     1.590208e+07   @monerocurrency  /coins/xmr/               \n",
+       "1     9.863610e+07  @ethereumproject  /coins/eth/               \n",
+       "2     2.592707e+10       @cardanocom  /coins/ada/               \n",
+       "\n",
+       "                            Website  \n",
+       "0             http://getmonero.org/  \n",
+       "1         https://www.ethereum.org/  \n",
+       "2  https://www.cardano.org/en/home/  \n",
+       "\n",
+       "[3 rows x 29 columns]"
+      ]
+     },
+     "execution_count": 94,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "del reddit_df['WebsiteUrl']\n",
+    "reddit_df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "reddit_df.to_csv('All_coins_info.csv')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Reddit\n",
+    "# Next: (1) community_creation convert to excel date format\n",
+    "# (2) collect data for all coins"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "l1=list()\n",
+    "df_ = pd.DataFrame()\n",
+    "for i in array:\n",
+    "    url=\"https://www.cryptocompare.com/api/data/socialstats/?id={}\".format(i)\n",
+    "    urlo = urllib2.urlopen(url)\n",
+    "    content = urlo.read()\n",
+    "    reddit=json.loads(content)['Data']['Reddit']\n",
+    "    reddit['code_id']= i\n",
+    "    reddit['date']=create_date\n",
+    "    l1.append(reddit)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#deduplicate list just in case\n",
+    "l1 = list(set(l1))\n",
+    "reddit_df=pd.DataFrame(l1)\n",
+    "reddit_df = reddit_df[['name', 'code_id', u'Points', u'active_users', u'comments_per_day', u'comments_per_hour',\n",
+    "                       u'community_creation', u'link', u'posts_per_day', u'posts_per_hour', u'subscribers', 'date']]\n",
+    "print reddit_df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "reddit_df.to_csv('Reddit_current_date.csv')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Next: Twitter, Facebook"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "url = urllib2.urlopen(url)\n",
+    "content = url.read()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "json.loads(content)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 88,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "        name comments_per_hour posts_per_day Points posts_per_hour  \\\n",
+      "0  XtraBYtes              1.47          3.70   5889           0.15   \n",
+      "\n",
+      "  active_users                                 link subscribers  \\\n",
+      "0           89  https://www.reddit.com/r/XtraBYtes/        5552   \n",
+      "\n",
+      "  community_creation code_id comments_per_day  \n",
+      "0         1492763400     456            35.27  \n"
+     ]
+    }
+   ],
+   "source": [
+    "reddit=json.loads(content)['Data']['Reddit']\n",
+    "reddit['code_id']= 456\n",
+    "#type(reddit)\n",
+    "reddit_df=pd.DataFrame.from_dict(reddit,orient='index')\n",
+    "\n",
+    "#reddit_df['code']=i\n",
+    "#print reddit_df\n",
+    "#type(reddit_df)\n",
+    "print pd.DataFrame.transpose(reddit_df)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 76,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[0]"
+      ]
+     },
+     "execution_count": 76,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "list(reddit_df)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 86,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "{u'Points': 1124,\n",
+       " u'account_creation': u'1493349372',\n",
+       " u'favourites': u'1325',\n",
+       " u'followers': 9815,\n",
+       " u'following': u'166',\n",
+       " u'link': u'https://twitter.com/XtraBYtes',\n",
+       " u'lists': 143,\n",
+       " u'name': u'XTRABYTES',\n",
+       " u'statuses': 757}"
+      ]
+     },
+     "execution_count": 86,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "json.loads(content)['Data']['Twitter']#['Points']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#Data:CryptoCompare:Points\n",
+    "json.loads(content)['Data']['Twitter']#['Points']"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 2",
+   "language": "python",
+   "name": "python2"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 2
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython2",
+   "version": "2.7.14"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
